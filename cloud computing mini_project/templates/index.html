@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>College Cloud - Data Management System</title>
+<link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">☁</div>
+    College Cloud
+    <span class="badge">AES-256 + HDFS</span>
+  </div>
+  <div style="font-size:0.78rem; color:var(--muted)">Distributed Data Management System</div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>Distributed College Cloud</h1>
+    <p>Upload, store &amp; download files securely on your private LAN cloud. Files are split into blocks and encrypted using AES-256.</p>
+  </div>
+
+  <!-- How it works steps -->
+  <div class="steps-bar">
+    <div class="step-item">
+      <span class="step-num">STEP 01</span>
+      <div class="step-label">📤 Upload File</div>
+      <div class="step-desc">Select any file</div>
+    </div>
+    <div class="step-item">
+      <span class="step-num">STEP 02</span>
+      <div class="step-label">✂️ Split Blocks</div>
+      <div class="step-desc">64 MB segments</div>
+    </div>
+    <div class="step-item">
+      <span class="step-num">STEP 03</span>
+      <div class="step-label">🔒 Encrypt</div>
+      <div class="step-desc">AES-256 CBC</div>
+    </div>
+    <div class="step-item">
+      <span class="step-num">STEP 04</span>
+      <div class="step-label">☁ Store HDFS</div>
+      <div class="step-desc">Cloud storage</div>
+    </div>
+    <div class="step-item">
+      <span class="step-num">STEP 05</span>
+      <div class="step-label">📥 Download</div>
+      <div class="step-desc">Decrypt &amp; merge</div>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <span class="stat-value" id="stat-files">0</span>
+      <div class="stat-label">Files Stored</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-value" id="stat-blocks">0</span>
+      <div class="stat-label">Total Blocks</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-value">256</span>
+      <div class="stat-label">Encryption Bits</div>
+    </div>
+    <div class="stat-box">
+      <span class="stat-value">64MB</span>
+      <div class="stat-label">Block Size</div>
+    </div>
+  </div>
+
+  <!-- Upload + Download cards -->
+  <div class="grid-2">
+
+    <!-- UPLOAD CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon upload-icon">📤</div>
+        <div>
+          <div class="card-title">Upload File</div>
+          <div class="card-subtitle">File will be encrypted and split into blocks</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="uploader-name" placeholder="e.g. Vaibhav Sharma" />
+      </div>
+
+      <div class="form-group">
+        <label>Select File</label>
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input">
+          <span class="drop-icon">📁</span>
+          <div class="drop-text">Drag &amp; drop or <span onclick="document.getElementById('file-input').click()">browse file</span></div>
+          <div id="file-name"></div>
+        </div>
+      </div>
+
+      <div class="progress-box" id="upload-progress">
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="upload-bar"></div>
+        </div>
+        <div class="progress-text" id="upload-status">Uploading...</div>
+      </div>
+
+      <div class="alert" id="upload-alert"></div>
+      <button class="btn btn-primary" onclick="uploadFile()">📤 Upload to Cloud</button>
+    </div>
+
+    <!-- DOWNLOAD CARD -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon download-icon">📥</div>
+        <div>
+          <div class="card-title">Download File</div>
+          <div class="card-subtitle">Blocks will be decrypted and reassembled</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Filename to Download</label>
+        <div class="dl-inline">
+          <input type="text" id="download-filename" placeholder="e.g. assignment.pdf" />
+          <button class="btn btn-success" onclick="downloadFile()" style="margin-top:0">📥 Download</button>
+        </div>
+      </div>
+
+      <div class="alert" id="download-alert"></div>
+
+      <div style="margin-top: 1.5rem;">
+        <label>How Download Works</label>
+        <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 4px;">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: var(--muted); line-height: 1.9;">
+            1. Fetch metadata.json from HDFS<br>
+            2. Download each block_N.enc file<br>
+            3. Decrypt each block (AES-256)<br>
+            4. Concatenate blocks → original file<br>
+            5. Browser downloads the file ✓
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Files List Card -->
+  <div class="card files-card">
+    <div class="card-header">
+      <div class="card-icon" style="background:rgba(255,255,255,0.05); font-size:1rem;">🗂</div>
+      <div>
+        <div class="card-title">Stored Files</div>
+        <div class="card-subtitle">All files currently on the cloud</div>
+      </div>
+      <button onclick="loadFiles()" style="margin-left:auto; background:none; border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:8px; font-size:0.75rem; cursor:pointer; font-family:inherit;">↻ Refresh</button>
+    </div>
+
+    <table class="files-table">
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Uploader</th>
+          <th>Size</th>
+          <th>Blocks</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="files-list">
+        <tr><td colspan="5" class="no-files">Loading files...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>
